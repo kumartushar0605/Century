@@ -5,6 +5,7 @@ import axios from 'axios';
 export default function HospitalManagement() {
   // State for departments
   const [departments, setDepartments] = useState([]);
+  const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [newDepartment, setNewDepartment] = useState({
     name: '',
     totalBeds: 0,
@@ -50,6 +51,10 @@ export default function HospitalManagement() {
   const [newEquipment, setNewEquipment] = useState('');
   const [newFacility, setNewFacility] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState('');
+  const [selectedDepartmentE, setSelectedDepartmentE] = useState('');
+  const [selectedDepartmentD, setSelectedDepartmentD] = useState('');
+  const [selectedDepartmentF, setSelectedDepartmentF] = useState('');
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -83,9 +88,10 @@ export default function HospitalManagement() {
   };
 
   const fetchDoctors = async () => {
+    const id = localStorage.getItem("id");
     setLoading(true);
     try {
-      const response = await axios.get(`http://localhost:5000/hospitals/:${hospitalData.id}/doctors`);
+      const response = await axios.get(`http://localhost:5000/hospitals/${id}/doctors`);
       setDoctors(response.data);
     } catch (err) {
       setError('Failed to fetch doctors');
@@ -121,8 +127,9 @@ export default function HospitalManagement() {
     e.preventDefault();
     setLoading(true);
     try {
-      const response = await axios.put(`http://localhost:5000/hospitals/${hospitalData.id}/departments/${selectedDepartment}/doctors}`, newDoctor);
-      setDoctors([...doctors, response.data]);
+      const response = await axios.put(`http://localhost:5000/hospitals/${hospitalData.id}/departments/${selectedDepartment}/doctors`, newDoctor);
+      setDoctors((prevDoctors) => [...prevDoctors,  response.data.doctor]);
+     
       setNewDoctor({
         name: '',
         specialization: '',
@@ -147,7 +154,7 @@ export default function HospitalManagement() {
   };
 
   const addEquipmentToDepartment = async () => {
-    if (!selectedDepartment || !newEquipment) {
+    if (!selectedDepartmentE || !newEquipment) {
       setError('Please select a department and enter equipment name');
       return;
     }
@@ -156,17 +163,16 @@ export default function HospitalManagement() {
     try {
       const hospitalid = localStorage.getItem("id");
       const response = await axios.put(
-        `http://localhost:5000/hospitals/${hospitalid}/departments/${selectedDepartment}/equipment`, 
+        `http://localhost:5000/hospitals/${hospitalid}/departments/${selectedDepartmentE}/equipment`, 
         { name: newEquipment }
       );
 
-      // Update UI
       const updatedDepartments = departments.map(dept => 
-        dept.name === selectedDepartment 
-          ? { ...dept, equipment:newEquipment  } 
+        dept.name === selectedDepartmentE 
+          ? { ...dept, equipment: [...dept.equipment, newEquipment] } 
           : dept
       );
-
+      
       setDepartments(updatedDepartments);
       setNewEquipment('');
       setSuccess('Equipment added successfully');
@@ -179,22 +185,22 @@ export default function HospitalManagement() {
 };
 
   const addFacilityToDepartment = async () => {
-    if (!selectedDepartment || !newFacility) {
+    if (!selectedDepartmentF || !newFacility) {
       setError('Please select a department and enter facility name');
       return;
     }
     
     setLoading(true);
     try {
-      const response = await axios.put(`http://localhost:5000/hospitals/${hospitalData.id}/departments/${selectedDepartment}/facilities`, { name: newFacility });
+      const response = await axios.put(`http://localhost:5000/hospitals/${hospitalData.id}/departments/${selectedDepartmentF}/facilities`, { facilities: newFacility });
       
       // Update the departments state
       const updatedDepartments = departments.map(dept => 
-        dept.id === selectedDepartment 
-          ? { ...dept, facilities: [...dept.facilities, response.data] } 
+        dept.name === selectedDepartmentF 
+          ? { ...dept, facilities: [...dept.facilities,newFacility ] } 
           : dept
       );
-      
+      console.log("fasdfadsf")
       setDepartments(updatedDepartments);
       setNewFacility('');
       setSuccess('Facility added successfully');
@@ -262,10 +268,10 @@ export default function HospitalManagement() {
 
   const confirmDeleteAction = async (Departementname) => {
     setLoading(true);
-    const { type, id } = confirmDelete;
+    const { type, id ,name } = confirmDelete;
     const hospitalName = localStorage.getItem("HName");
     const hospitalid = localStorage.getItem("id");
-    console.log(id)
+    console.log("jj"+id)
     
     try {
       if (type === 'department') {
@@ -273,38 +279,47 @@ export default function HospitalManagement() {
         setDepartments(departments.filter(dept => dept.name !== Departementname));
         setSuccess('Department deleted successfully');
       } else if (type === 'doctor') {
-        await axios.delete(`/api/doctors/${id}/d/${hospitalData.id}`);
-        setDoctors(doctors.filter(doc => doc.id !== id));
-        setSuccess('Doctor deleted successfully');
+        await axios.delete(`http://localhost:5000/hospitals/${hospitalid}/doctors/${id}`);
+        setDoctors(doctors.filter(doc => doc._id !== id));
+        setSuccess("Doctor deleted successfully");
+
       } else if (type === 'equipment') {
-        const [deptId, equipId] = id.split('-');
-        await axios.delete(`/api/departments/${deptId}/equipment/${equipId}/d/${hospitalData.id}`);
-        
-        const updatedDepartments = departments.map(dept => {
-          if (dept.id === deptId) {
-            return {
-              ...dept,
-              equipments: dept.equipments.filter(equip => equip.id !== equipId)
-            };
-          }
-          return dept;
-        });
-        
-        setDepartments(updatedDepartments);
-        setSuccess('Equipment deleted successfully');
+        const [deptId, equipId] = id.split('-'); // Ensure correct splitting
+    
+        try {
+            await axios.delete(`http://localhost:5000/hospitals/${hospitalid}/departments/${deptId}/equipment/${name}`);
+    
+            setDepartments(prevDepartments =>
+                prevDepartments.map(dept =>
+                    dept.name === selectedDepartmentE 
+                        ? { 
+                            ...dept, 
+                            equipment: dept.equipment.filter(equip => equip !== name) 
+                          }
+                        : dept
+                )
+            );
+    
+            setSuccess('Equipment deleted successfully');
+        } catch (error) {
+            console.error("Error deleting equipment:", error);
+        }
+  
+    
       } else if (type === 'facility') {
         const [deptId, facilityId] = id.split('-');
-        await axios.delete(`/api/departments/${deptId}/facility/${facilityId}/d/${hospitalData.id}`);
+        await axios.delete(`http://localhost:5000/hospitals/${hospitalid}/departments/${deptId}/facilities/${name}`);
         
-        const updatedDepartments = departments.map(dept => {
-          if (dept.id === deptId) {
-            return {
-              ...dept,
-              facilities: dept.facilities.filter(facility => facility.id !== facilityId)
-            };
-          }
-          return dept;
-        });
+        setDepartments(prevDepartments =>
+          prevDepartments.map(dept =>
+              dept.name === selectedDepartmentF 
+                  ? { 
+                      ...dept, 
+                      facilities: dept.facilities.filter(equip => equip !== name) 
+                    }
+                  : dept
+          )
+      );
         
         setDepartments(updatedDepartments);
         setSuccess('Facility deleted successfully');
@@ -504,9 +519,9 @@ export default function HospitalManagement() {
               <div className="mb-4">
                 <label className="block text-gray-700 mb-2">Department</label>
                 <select
-                  className="w-full p-2 border rounded"
-                  value={newDoctor.departmentId}
-                  onChange={(e) => setNewDoctor({...newDoctor, departmentId: e.target.value})}
+                  className="w-full p-2 border rounded mb-2"
+                  value={selectedDepartment}
+                  onChange={(e) => setSelectedDepartment(e.target.value)}
                   required
                 >
                   <option value="">Select Department</option>
@@ -573,7 +588,7 @@ export default function HospitalManagement() {
                   </thead>
                   <tbody>
                     {doctors.map((doctor) => (
-                      <tr key={doctor.id}>
+                      <tr key={doctor._id}>
                         <td className="py-2 px-4 border-b">{doctor.name}</td>
                         <td className="py-2 px-4 border-b">{doctor.specialization}</td>
                         <td className="py-2 px-4 border-b">
@@ -583,13 +598,13 @@ export default function HospitalManagement() {
                           <div className="flex space-x-2">
                             <button
                               className="text-blue-600 hover:text-blue-800"
-                              onClick={() => alert('Availability details to be displayed in a modal')}
+                              onClick={() => setSelectedDoctor(doctor)}
                             >
                               View Schedule
                             </button>
                             <button
                               className="text-red-600 hover:text-red-800"
-                              onClick={() => promptDelete('doctor', doctor.id, doctor.name)}
+                              onClick={() => promptDelete('doctor', doctor._id, doctor.name)}
                             >
                               Delete
                             </button>
@@ -601,6 +616,35 @@ export default function HospitalManagement() {
                 </table>
               </div>
             )}
+            {selectedDoctor && (
+  <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
+    <div className="bg-white p-6 rounded-lg w-96 relative">
+    <div className="flex justify-end mt-4">
+      <button
+        className="absolute top-2 right-2 text-gray-600 hover:text-gray-800"
+        onClick={() => setSelectedDoctor(null)}
+      >
+        ✖
+      </button>
+      </div>
+      <h2 className="text-lg font-bold mb-4">{selectedDoctor.name}'s Schedule</h2>
+      <ul>
+        {Object.entries(selectedDoctor.availability).map(([day, { isAvailable, hours }]) => (
+          <li key={day} className="mb-2">
+            <strong>{day.charAt(0).toUpperCase() + day.slice(1)}:</strong> {isAvailable ? hours : "Not Available"}
+          </li>
+        ))}
+      </ul>
+      <button
+        className="mt-4 bg-red-500 text-white px-4 py-2 rounded w-full"
+        onClick={() => setSelectedDoctor(null)}
+      >
+        Close
+      </button>
+    </div>
+  </div>
+)}
+
           </div>
         </div>
         
@@ -615,8 +659,8 @@ export default function HospitalManagement() {
                 <label className="block text-gray-700 mb-2">Select Department</label>
                 <select
                   className="w-full p-2 border rounded mb-2"
-                  value={selectedDepartment}
-                  onChange={(e) => setSelectedDepartment(e.target.value)}
+                  value={selectedDepartmentE}
+                  onChange={(e) => setSelectedDepartmentE(e.target.value)}
                   required
                 >
                   <option value="">Select Department</option>
@@ -638,25 +682,26 @@ export default function HospitalManagement() {
                     type="button"
                     className="bg-blue-600 text-white py-2 px-4 rounded-r hover:bg-blue-700"
                     onClick={addEquipmentToDepartment}
-                    disabled={loading || !selectedDepartment}
+                    disabled={loading || !selectedDepartmentE}
                   >
                     Add
                   </button>
                 </div>
               </div>
               
-              {selectedDepartment && (
+              {selectedDepartmentE && (
                 <div>
                   <h4 className="font-medium mb-2">
-                    Equipment in {departments.find(d => d.id === selectedDepartment)?.name || 'Selected Department'}
+                    Equipment in {departments.find(d => d.name === selectedDepartmentE)?.name || 'Selected Department'}
                   </h4>
                   <ul className="list-disc pl-5">
-                    {departments.find(d => d.id === selectedDepartment)?.equipments.map((item) => (
+                   {console.log("Departments:", JSON.stringify(departments, null, 2))                  }
+                    {departments.find(d => d.name === selectedDepartmentE)?.equipment.map((item) => (
                       <li key={item.id} className="mb-1 flex justify-between items-center">
-                        <span>{item.name}</span>
+                        <span>{item}</span>
                         <button 
                           className="text-red-600 hover:text-red-800 text-sm"
-                          onClick={() => promptDelete('equipment', `${selectedDepartment}-${item.id}`, item.name)}
+                          onClick={() => promptDelete('equipment', selectedDepartmentE, item)}
                         >
                           Delete
                         </button>
@@ -673,8 +718,8 @@ export default function HospitalManagement() {
                 <label className="block text-gray-700 mb-2">Select Department</label>
                 <select
                   className="w-full p-2 border rounded mb-2"
-                  value={selectedDepartment}
-                  onChange={(e) => setSelectedDepartment(e.target.value)}
+                  value={selectedDepartmentF}
+                  onChange={(e) => setSelectedDepartmentF(e.target.value)}
                   required
                 >
                   <option value="">Select Department</option>
@@ -696,25 +741,25 @@ export default function HospitalManagement() {
                     type="button"
                     className="bg-blue-600 text-white py-2 px-4 rounded-r hover:bg-blue-700"
                     onClick={addFacilityToDepartment}
-                    disabled={loading || !selectedDepartment}
+                    disabled={loading || !selectedDepartmentF}
                   >
                     Add
                   </button>
                 </div>
               </div>
               
-              {selectedDepartment && (
+              {selectedDepartmentF && (
                 <div>
                   <h4 className="font-medium mb-2">
-                    Facilities in {departments.find(d => d.id === selectedDepartment)?.name || 'Selected Department'}
+                    Facilities in {departments.find(d => d.name === selectedDepartmentF)?.name || 'Selected Department'}
                   </h4>
                   <ul className="list-disc pl-5">
-                    {departments.find(d => d.id === selectedDepartment)?.facilities.map((item) => (
+                    {departments.find(d => d.name === selectedDepartmentF)?.facilities.map((item) => (
                       <li key={item.id} className="mb-1 flex justify-between items-center">
-                        <span>{item.name}</span>
+                        <span>{item}</span>
                         <button 
                           className="text-red-600 hover:text-red-800 text-sm"
-                          onClick={() => promptDelete('facility', `${selectedDepartment}-${item.id}`, item.name)}
+                          onClick={() => promptDelete('facility', selectedDepartmentF, item)}
                         >
                           Delete
                         </button>

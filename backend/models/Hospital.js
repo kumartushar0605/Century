@@ -3,8 +3,17 @@ import mongoose from "mongoose";
 const doctorSchema = new mongoose.Schema({
   name: { type: String, required: true },
   specialization: { type: String, required: true },
-  availability: { type: String, enum: ['Available', 'Unavailable'], required: true }
+  availability: {
+    monday: { isAvailable: Boolean, hours: String },
+    tuesday: { isAvailable: Boolean, hours: String },
+    wednesday: { isAvailable: Boolean, hours: String },
+    thursday: { isAvailable: Boolean, hours: String },
+    friday: { isAvailable: Boolean, hours: String },
+    saturday: { isAvailable: Boolean, hours: String },
+    sunday: { isAvailable: Boolean, hours: String }
+  }
 });
+
 
 // Department Schema (Embedded in Hospital)
 const departmentSchema = new mongoose.Schema({

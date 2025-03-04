@@ -119,7 +119,7 @@ export const addDoctor = async (req, res) => {
           return res.status(404).json({ message: 'Hospital not found' });
       }
 
-      const department = hospital.departments.id(req.params.department);
+      const department = hospital.departments.find(dept => dept.name === req.params.department);
       if (!department) {
           return res.status(404).json({ message: 'Department not found' });
       }
@@ -131,8 +131,8 @@ export const addDoctor = async (req, res) => {
       department.doctors.push(newDoctor);
       await hospital.save();
 
-      res.status(201).json({ message: 'Doctor added', hospital });
-  } catch (error) {
+      res.status(201).json({ message: "Doctor added", doctor: newDoctor });
+    } catch (error) {
       res.status(500).json({ message: 'Server Error', error });
   }
 };
@@ -169,20 +169,22 @@ export const updateFacilities = async (req, res) => {
           return res.status(404).json({ message: 'Hospital not found' });
       }
 
-      const department = hospital.departments.id(req.params.department);
-      if (!department) {
+      const departmentObj = hospital.departments.find(dept => dept.name === req.params.department);
+      console.log(departmentObj)
+      if (!departmentObj) {
           return res.status(404).json({ message: 'Department not found' });
       }
 
-      const { facilities } = req.body;
+      const { facilities } = req.body;console.log(facilities)
+    
       if (!facilities ) {
           return res.status(400).json({ message: 'Enter Facilities' });
       }
 
-      department.facilities = facilities;
-      await hospital.save();
+      departmentObj.facilities.push(facilities);
+            await hospital.save();
 
-      res.status(200).json({ message: 'Facilities updated successfully', department });
+      res.status(200).json({ message: 'Facilities updated successfully'});
   } catch (error) {
       res.status(500).json({ message: 'Server Error', error });
   }
@@ -214,34 +216,35 @@ export const deleteDepartment = async (req, res) => {
   }
 };
 
-export const  deleteDoctor = async (req, res) => {
+export const deleteDoctor = async (req, res) => {
   try {
-      const hospital = await HospitalSchema.findById(req.params.hospitalId);
-      if (!hospital) {
-          return res.status(404).json({ message: 'Hospital not found' });
-      }
+    const hospital = await HospitalSchema.findById(req.params.hospitalId);
+    if (!hospital) {
+      return res.status(404).json({ message: "Hospital not found" });
+    }
 
-      const department = hospital.departments.id(req.params.departmentId);
-      if (!department) {
-          return res.status(404).json({ message: 'Department not found' });
-      }
+    // Find the department that contains the doctor
+    const department = hospital.departments.find(dept =>
+      dept.doctors.some(doc => doc._id.toString() === req.params.doctorId)
+    );
 
-      const doctorIndex = department.doctors.findIndex(
-          (doc) => doc._id.toString() === req.params.doctorId
-      );
+    if (!department) {
+      return res.status(404).json({ message: "Department not found" });
+    }
 
-      if (doctorIndex === -1) {
-          return res.status(404).json({ message: 'Doctor not found' });
-      }
+    // Remove the doctor from the department
+    department.doctors = department.doctors.filter(
+      (doc) => doc._id.toString() !== req.params.doctorId
+    );
 
-      department.doctors.splice(doctorIndex, 1);
-      await hospital.save();
+    await hospital.save();
 
-      res.status(200).json({ message: 'Doctor deleted successfully' });
+    res.status(200).json({ message: "Doctor deleted successfully" });
   } catch (error) {
-      res.status(500).json({ message: 'Server Error', error });
+    res.status(500).json({ message: "Server Error", error });
   }
 };
+
 
 export const getDoctorsByHospitalId = async (req, res) => {
   try {
@@ -311,4 +314,52 @@ export const updateBedCount = async (req, res) => {
     } catch (error) {
         res.status(500).json({ message: "Server Error", error });
     }
+};
+
+//Delete Equipment
+
+export const deleteEquipment = async (req, res) => {
+  const { hospitalId, departmentName, equipmentName } = req.params;
+  try {
+      const hospital = await HospitalSchema.findById(hospitalId);
+      if (!hospital) {
+          return res.status(404).json({ message: "Hospital not found" });
+      }
+
+      const department = hospital.departments.find(dep => dep.name === departmentName);
+      if (!department) {
+          return res.status(404).json({ message: "Department not found" });
+      }
+
+      department.equipment = department.equipment.filter(eq => eq !== equipmentName);
+      await hospital.save();
+
+      res.status(200).json({ message: "Equipment removed successfully" });
+  } catch (error) {
+      res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Delete Facility
+
+export const deleteFacility = async (req, res) => {
+  const { hospitalId, departmentName, facility } = req.params;
+  try {
+      const hospital = await HospitalSchema.findById(hospitalId);
+      if (!hospital) {
+          return res.status(404).json({ message: "Hospital not found" });
+      }
+
+      const department = hospital.departments.find(dep => dep.name === departmentName);
+      if (!department) {
+          return res.status(404).json({ message: "Department not found" });
+      }
+
+      department.facilities = department.facilities.filter(eq => eq !== facility);
+      await hospital.save();
+
+      res.status(200).json({ message: "Facility removed successfully" });
+  } catch (error) {
+      res.status(500).json({ message: "Server error", error: error.message });
+  }
 };
