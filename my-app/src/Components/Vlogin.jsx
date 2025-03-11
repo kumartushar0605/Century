@@ -15,10 +15,11 @@ const Vlogin = () => {
     setError("");
 
     try {
-      const response = await fetch("https://your-backend-api.com/login", {
+      const response = await fetch("http://localhost:5000/Vistor/Login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
+        withCredentials: true, // Ensures cookies are sent
       });
 
       const data = await response.json();
@@ -65,7 +66,7 @@ const Vlogin = () => {
         </form>
         <p className="text-center mt-4">
           Not registered?{" "}
-          <a href="/register" className="text-blue-500 hover:underline">
+          <a href="/vregister" className="text-blue-500 hover:underline">
             Register
           </a>
         </p>

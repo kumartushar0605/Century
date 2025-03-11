@@ -1,8 +1,12 @@
 // pages/hospital-management.jsx
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useRouter } from "next/navigation";
+
 
 export default function HospitalManagement() {
+  const router = useRouter();
+  
   // State for departments
   const [departments, setDepartments] = useState([]);
   const [selectedDoctor, setSelectedDoctor] = useState(null);
@@ -13,6 +17,19 @@ export default function HospitalManagement() {
     equipments: [],
     facilities: []
   });
+
+  
+
+  useEffect(() => {
+    const name = localStorage.getItem("HName");
+
+  console.log(name+"hi")
+  if (!name) {
+    router.push("/hregistration"); // Redirect to the registration page
+  }
+}, []);
+
+
 
   const [hospitalData, setHospitalData] = useState({
     hospitalName: "",
@@ -29,6 +46,19 @@ export default function HospitalManagement() {
       });
     }
   }, []);
+
+  const [name, setName] = useState("");
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  useEffect(() => {
+    const storedName = localStorage.getItem("HName");
+    if (storedName) setName(storedName);
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("HName");
+    router.push("/");
+  };
 
   // State for doctors
   const [doctors, setDoctors] = useState([]);
@@ -334,7 +364,38 @@ export default function HospitalManagement() {
   };
 
   return (
+    <>
+    <header className="bg-blue-600 text-white p-4">
+      <div className="container mx-auto flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold">Hospital Finder</h1>
+          <p className="text-blue-100">Find hospitals and check availability</p>
+        </div>
+        <div className="relative">
+          <button
+            className="flex items-center gap-2 bg-blue-500 px-4 py-2 rounded"
+            onClick={() => setDropdownOpen(!dropdownOpen)}
+          >
+            <span>{name}</span>
+            <span>👤</span>
+          </button>
+          {dropdownOpen && (
+            <div className="absolute right-0 mt-2  bg-white text-black shadow-md rounded">
+            <button
+  className="block px-4 py-2 text-gray-800 hover:bg-gray-200 w-full"
+  onClick={handleLogout}
+>
+  Logout
+</button>
+
+            </div>
+          )}
+        </div>
+      </div>
+    </header>
+   
     <div className="min-h-screen bg-gray-100 p-6">
+       
       <div className="max-w-7xl mx-auto">
         <h1 className="text-3xl font-bold mb-8 text-blue-800">Hospital Management System</h1>
         
@@ -810,5 +871,6 @@ export default function HospitalManagement() {
         </div>
       </div>
     </div>
+    </>
   );
 }

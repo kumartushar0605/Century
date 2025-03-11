@@ -2,9 +2,9 @@ import express from "express";
 
 import { connectDB } from "./data/database.js";
 import cookieParser from "cookie-parser";
-import userRouterr from "./routes/report.js"
 import cors from "cors"
 import router from "./routes/Hospital.js";
+import routerr from "./routes/Visitor.js";
 
  const app = express();
  connectDB();
@@ -16,7 +16,7 @@ import router from "./routes/Hospital.js";
     credentials:true,
 }))
 app.use(router)
- app.use(userRouterr);
+ app.use(routerr);
 
 
 app.get("/",(req,res)=>{
