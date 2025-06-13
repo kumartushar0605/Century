@@ -2,6 +2,7 @@ import jwt from "jsonwebtoken"
 //////Teacherrrrrrr
 export const sendCookie = (Userr,res,message,statusCode)=>{
     const tokenn = jwt.sign({_id:Userr._id},"tdsfadsfasfadsfasdfb")
+     console.log("hitushar")
    
     res.status(statusCode).cookie("tokenn",tokenn,{
       httpOnly:true,

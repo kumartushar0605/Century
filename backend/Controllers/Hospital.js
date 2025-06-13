@@ -36,29 +36,31 @@ export const Hospitalregister = async(req,res)=>{
 };
 
 
-export const HospitalLogin = async(req,res)=>{
-    try {
-        const { email, password } = req.body;
-    
-        // Check if hospital exists
-        const hospital = await HospitalSchema.findOne({ email });
-        if (!hospital) {
-          return res.status(400).json({ message: "Invalid credentials!" });
-        }
-     
-        if (password !==  hospital.password) {
-          return res.status(400).json({ message: "Invalid credentials!" });
-        }
-    
-        // Generate JWT token
-        sendCookie(hospital,res,"Login succesfully",201);
-    
-       
-      } catch (error) {
-        res.status(500).json({ message: "Server error", error: error.message });
-      }
+// backend/controllers/hospitalController.js
 
-}
+export const HospitalLogin = async (req, res) => {
+  try {
+    const { contactNumber, password } = req.body;
+
+    // Check if hospital exists
+    const hospital = await HospitalSchema.findOne({ contactNumber });
+    if (!hospital) {
+      return res.status(400).json({ message: "Invalid credentials!" });
+    }
+
+    if (password !== hospital.password) {
+      return res.status(400).json({ message: "Invalid credentials!" });
+    }
+
+    // Send cookie (assuming this function sets JWT cookie)
+   
+    sendCookie(hospital, res, "Login successfully", 201);
+
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
 // Get all hospitals
 export const getAllHospitals = async (req, res) => {
   try {
@@ -222,10 +224,9 @@ export const deleteDoctor = async (req, res) => {
     if (!hospital) {
       return res.status(404).json({ message: "Hospital not found" });
     }
-
     // Find the department that contains the doctor
     const department = hospital.departments.find(dept =>
-      dept.doctors.some(doc => doc._id.toString() === req.params.doctorId)
+      dept.doctors.some(doc => doc.name === req.params.doctorName)
     );
 
     if (!department) {
@@ -234,7 +235,7 @@ export const deleteDoctor = async (req, res) => {
 
     // Remove the doctor from the department
     department.doctors = department.doctors.filter(
-      (doc) => doc._id.toString() !== req.params.doctorId
+      (doc) => doc.name !== req.params.doctorName
     );
 
     await hospital.save();

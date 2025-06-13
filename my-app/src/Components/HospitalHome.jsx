@@ -17,15 +17,23 @@ export default function HospitalManagement() {
     equipments: [],
     facilities: []
   });
-
+ const [hospitalDataMain, sethospitalDataMain] = useState();
   
 
   useEffect(() => {
     const name = localStorage.getItem("HName");
+    const hospital = JSON.parse(localStorage.getItem("hospitalUser"));
+console.log(hospital.hospitalName +"Sdfasd"); // or ._id, .contactNumber, etc.
+sethospitalDataMain(hospital)
 
-  console.log(name+"hi")
-  if (!name) {
+
+
+
+  if (!name || !hospital.hospitalName) {
     router.push("/hregistration"); // Redirect to the registration page
+  }else{
+    setDepartments(hospital.departments)
+
   }
 }, []);
 
@@ -309,7 +317,7 @@ export default function HospitalManagement() {
         setDepartments(departments.filter(dept => dept.name !== Departementname));
         setSuccess('Department deleted successfully');
       } else if (type === 'doctor') {
-        await axios.delete(`http://localhost:5000/hospitals/${hospitalid}/doctors/${id}`);
+ await axios.delete(`http://localhost:5000/hospitals/${hospitalid}/doctors/${name}/Department/${Departementname}`);
         setDoctors(doctors.filter(doc => doc._id !== id));
         setSuccess("Doctor deleted successfully");
 
@@ -351,7 +359,7 @@ export default function HospitalManagement() {
           )
       );
         
-        setDepartments(updatedDepartments);
+        // setDepartments(updatedDepartments);
         setSuccess('Facility deleted successfully');
       }
     } catch (err) {
@@ -833,44 +841,8 @@ export default function HospitalManagement() {
           </div>
         </div>
         
-        {/* Additional Features */}
-        <div className="mt-6 bg-white p-6 rounded shadow">
-          <h2 className="text-xl font-semibold mb-4 text-blue-700">Additional Hospital Management Features</h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="border p-4 rounded hover:bg-blue-50 cursor-pointer">
-              <h3 className="font-medium text-blue-600 mb-2">Patient Registry</h3>
-              <p className="text-gray-600 text-sm">Manage patient records, admissions, and discharge processes</p>
-            </div>
-            
-            <div className="border p-4 rounded hover:bg-blue-50 cursor-pointer">
-              <h3 className="font-medium text-blue-600 mb-2">Appointment Scheduling</h3>
-              <p className="text-gray-600 text-sm">Schedule and manage patient appointments with doctors</p>
-            </div>
-            
-            <div className="border p-4 rounded hover:bg-blue-50 cursor-pointer">
-              <h3 className="font-medium text-blue-600 mb-2">Inventory Management</h3>
-              <p className="text-gray-600 text-sm">Track medical supplies, medications, and equipment inventory</p>
-            </div>
-            
-            <div className="border p-4 rounded hover:bg-blue-50 cursor-pointer">
-              <h3 className="font-medium text-blue-600 mb-2">Billing & Insurance</h3>
-              <p className="text-gray-600 text-sm">Manage patient billing, insurance claims, and payments</p>
-            </div>
-            
-            <div className="border p-4 rounded hover:bg-blue-50 cursor-pointer">
-              <h3 className="font-medium text-blue-600 mb-2">Staff Management</h3>
-              <p className="text-gray-600 text-sm">Track staff schedules, performance, and credentials</p>
-            </div>
-            
-            <div className="border p-4 rounded hover:bg-blue-50 cursor-pointer">
-              <h3 className="font-medium text-blue-600 mb-2">Reports & Analytics</h3>
-              <p className="text-gray-600 text-sm">Generate insights on hospital operations and patient care</p>
-            </div>
-          </div>
-        </div>
       </div>
-    </div>
+      </div>
     </>
   );
 }

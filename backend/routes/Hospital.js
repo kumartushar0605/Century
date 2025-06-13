@@ -15,7 +15,7 @@ router.get('/hospitals', getAllHospitals);
 router.get('/hospitals/:id', getHospitalById);
 
 router.delete('/hospitals/:id/departments/:department', deleteDepartment);
-router.delete('/hospitals/:hospitalId/doctors/:doctorId', deleteDoctor);
+router.delete('/hospitals/:hospitalId/doctors/:doctorName/Department/:dept', deleteDoctor);
 router.get('/hospitals/:id/doctors', getDoctorsByHospitalId);
 router.get('/hospitals/:id/departments', getDepartmentsByHospitalId);
 router.delete("/hospitals/:hospitalId/departments/:departmentName/equipment/:equipmentName",deleteEquipment)
