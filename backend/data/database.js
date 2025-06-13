@@ -1,9 +1,17 @@
 import mongoose from "mongoose";
+import dotenv from "dotenv";
 
-export const connectDB = ()=>{
-    mongoose.connect("mongodb://127.0.0.1:27017/",{
-        dbName:"PrjectInternship"
-    }).then(()=>{
-        console.log("database is connected")
-    }).catch(console.error());
-}
+dotenv.config(); // Load .env variables
+
+export const connectDB = () => {
+  mongoose.connect(process.env.MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+  })
+  .then(() => {
+    console.log("Database connected");
+  })
+  .catch((error) => {
+    console.error("MongoDB connection error:", error);
+  });
+};
